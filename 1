@@ -1,0 +1,484 @@
+LP-III Practical Exam – Python Programs
+DAA, Machine Learning and Mini Projects | Simple, exam-oriented versions
+How to use: Save each program in a separate .py file and run it. For ML programs, keep the required CSV file in the same folder. Install libraries once using: pip install numpy pandas scikit-learn
+1. Fibonacci – Recursive and Non-Recursive
+Prints Fibonacci numbers using both methods. Recursive Fibonacci is slower because it repeats calculations.
+def fib_recursive(n):
+    if n <= 1:
+        return n
+    return fib_recursive(n - 1) + fib_recursive(n - 2)
+ 
+ 
+def fib_iterative(n):
+    a, b = 0, 1
+    result = []
+    for i in range(n):
+        result.append(a)
+        a, b = b, a + b
+    return result
+ 
+ 
+n = int(input("Enter number of terms: "))
+ 
+print("Recursive series:")
+for i in range(n):
+    print(fib_recursive(i), end=" ")
+ 
+print("\\nNon-recursive series:")
+print(*fib_iterative(n))
+ 
+# Complexity:
+# Recursive: Time O(2^n), Space O(n)
+# Iterative: Time O(n), Space O(1) extra (excluding output)
+2. Huffman Encoding – Greedy Method
+Creates variable-length binary codes. Characters with higher frequency generally get shorter codes.
+import heapq
+from collections import Counter
+ 
+ 
+class Node:
+    def __init__(self, char, freq):
+        self.char = char
+        self.freq = freq
+        self.left = None
+        self.right = None
+ 
+    # heapq compares nodes using this method
+    def __lt__(self, other):
+        return self.freq < other.freq
+ 
+ 
+def huffman(text):
+    frequency = Counter(text)
+    heap = [Node(ch, fr) for ch, fr in frequency.items()]
+    heapq.heapify(heap)
+ 
+    if len(heap) == 1:
+        return {heap[0].char: "0"}
+ 
+    while len(heap) > 1:
+        left = heapq.heappop(heap)
+        right = heapq.heappop(heap)
+ 
+        parent = Node(None, left.freq + right.freq)
+        parent.left = left
+        parent.right = right
+        heapq.heappush(heap, parent)
+ 
+    codes = {}
+ 
+    def make_codes(node, code):
+        if node.char is not None:
+            codes[node.char] = code
+            return
+        make_codes(node.left, code + "0")
+        make_codes(node.right, code + "1")
+ 
+    make_codes(heap[0], "")
+    return codes
+ 
+ 
+message = input("Enter text: ")
+codes = huffman(message)
+ 
+print("Huffman codes:")
+for ch, code in codes.items():
+    print(repr(ch), ":", code)
+ 
+encoded = "".join(codes[ch] for ch in message)
+print("Encoded message:", encoded)
+3. Fractional Knapsack – Greedy Method
+Items can be divided. The algorithm selects items in descending order of profit/weight ratio.
+n = int(input("Enter number of items: "))
+items = []
+ 
+for i in range(n):
+    profit = float(input("Enter profit: "))
+    weight = float(input("Enter weight: "))
+    items.append((profit, weight, profit / weight))
+ 
+capacity = float(input("Enter knapsack capacity: "))
+ 
+# Sort by profit/weight ratio, highest first
+items.sort(key=lambda x: x[2], reverse=True)
+ 
+total_profit = 0.0
+ 
+for profit, weight, ratio in items:
+    if capacity == 0:
+        break
+ 
+    if weight <= capacity:
+        total_profit += profit
+        capacity -= weight
+    else:
+        fraction = capacity / weight
+        total_profit += profit * fraction
+        capacity = 0
+ 
+print("Maximum profit =", total_profit)
+ 
+# Time complexity: O(n log n) because of sorting
+4. 0/1 Knapsack – Dynamic Programming
+Each item is either selected completely or not selected. Fractions are not allowed.
+n = int(input("Enter number of items: "))
+profits = []
+weights = []
+ 
+for i in range(n):
+    profits.append(int(input("Enter profit: ")))
+    weights.append(int(input("Enter weight: ")))
+ 
+capacity = int(input("Enter capacity: "))
+ 
+# dp[i][w] = maximum profit using first i items and capacity w
+dp = [[0 for w in range(capacity + 1)] for i in range(n + 1)]
+ 
+for i in range(1, n + 1):
+    for w in range(capacity + 1):
+        if weights[i - 1] <= w:
+            take = profits[i - 1] + dp[i - 1][w - weights[i - 1]]
+            leave = dp[i - 1][w]
+            dp[i][w] = max(take, leave)
+        else:
+            dp[i][w] = dp[i - 1][w]
+ 
+print("Maximum profit =", dp[n][capacity])
+ 
+# Time complexity: O(n * capacity)
+# Space complexity: O(n * capacity)
+5. N-Queens – Backtracking (First Queen Fixed)
+Places one queen in each row and column so that no two queens attack each other. Enter the fixed queen position using row and column numbers starting from 1.
+def print_board(board, n):
+    for row in board:
+        print(" ".join("Q" if cell else "." for cell in row))
+    print()
+ 
+ 
+def safe(board, row, col, n):
+    # Check same column above current position
+    for i in range(row):
+        if board[i][col] == 1:
+            return False
+ 
+    # Check upper-left diagonal
+    i, j = row - 1, col - 1
+    while i >= 0 and j >= 0:
+        if board[i][j] == 1:
+            return False
+        i -= 1
+        j -= 1
+ 
+    # Check upper-right diagonal
+    i, j = row - 1, col + 1
+    while i >= 0 and j < n:
+        if board[i][j] == 1:
+            return False
+        i -= 1
+        j += 1
+ 
+    return True
+ 
+ 
+def solve(board, row, n, fixed_row, fixed_col):
+    if row == n:
+        return True
+ 
+    # Do not move the already fixed queen
+    if row == fixed_row:
+        if safe(board, row, fixed_col, n):
+            board[row][fixed_col] = 1
+            if solve(board, row + 1, n, fixed_row, fixed_col):
+                return True
+            board[row][fixed_col] = 0
+        return False
+ 
+    for col in range(n):
+        if safe(board, row, col, n):
+            board[row][col] = 1
+            if solve(board, row + 1, n, fixed_row, fixed_col):
+                return True
+            board[row][col] = 0
+ 
+    return False
+ 
+ 
+n = int(input("Enter N: "))
+fixed_row = int(input("Fixed queen row (1 to N): ")) - 1
+fixed_col = int(input("Fixed queen column (1 to N): ")) - 1
+ 
+if n <= 0 or not (0 <= fixed_row < n and 0 <= fixed_col < n):
+    print("Invalid input")
+else:
+    board = [[0] * n for _ in range(n)]
+    board[fixed_row][fixed_col] = 1
+ 
+    # If the fixed queen conflicts with itself, solve() returns False
+    board[fixed_row][fixed_col] = 0
+    if solve(board, 0, n, fixed_row, fixed_col):
+        print("Solution:")
+        print_board(board, n)
+    else:
+        print("No solution for this fixed position.")
+6. Matrix Multiplication – Normal and Multithreaded
+Compares ordinary matrix multiplication with one thread per output row.
+import threading
+import time
+ 
+ 
+def multiply_normal(A, B):
+    rows, cols, common = len(A), len(B[0]), len(B)
+    C = [[0] * cols for _ in range(rows)]
+ 
+    for i in range(rows):
+        for j in range(cols):
+            for k in range(common):
+                C[i][j] += A[i][k] * B[k][j]
+    return C
+ 
+ 
+def calculate_row(A, B, C, row):
+    cols = len(B[0])
+    common = len(B)
+    for j in range(cols):
+        for k in range(common):
+            C[row][j] += A[row][k] * B[k][j]
+ 
+ 
+def multiply_threaded(A, B):
+    rows, cols = len(A), len(B[0])
+    C = [[0] * cols for _ in range(rows)]
+    threads = []
+ 
+    for i in range(rows):
+        t = threading.Thread(target=calculate_row,
+                             args=(A, B, C, i))
+        threads.append(t)
+        t.start()
+ 
+    for t in threads:
+        t.join()
+ 
+    return C
+ 
+ 
+A = [[1, 2], [3, 4]]
+B = [[5, 6], [7, 8]]
+ 
+start = time.perf_counter()
+normal = multiply_normal(A, B)
+normal_time = time.perf_counter() - start
+ 
+start = time.perf_counter()
+threaded = multiply_threaded(A, B)
+threaded_time = time.perf_counter() - start
+ 
+print("Normal result:", normal)
+print("Threaded result:", threaded)
+print("Normal time:", normal_time)
+print("Threaded time:", threaded_time)
+ 
+# Both methods perform O(rows * cols * common) work.
+# Python threads may not be faster for CPU-bound work because of the GIL.
+# Small matrices may take longer with threads due to thread overhead.
+7. Email Spam Detection – KNN and SVM
+Classifies email text as spam or not spam using TF-IDF features and compares KNN with SVM.
+Dataset / note: Requires spam.csv with text and label columns. If your dataset uses v1/v2, rename those columns or update the code.
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.svm import LinearSVC
+from sklearn.pipeline import Pipeline
+from sklearn.metrics import accuracy_score, classification_report
+ 
+# CSV must contain columns: text and label
+# label values may be spam/ham or 1/0
+data = pd.read_csv("spam.csv")
+X = data["text"].fillna("")
+y = data["label"]
+ 
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+ 
+models = {
+    "KNN": Pipeline([
+        ("tfidf", TfidfVectorizer()),
+        ("model", KNeighborsClassifier(n_neighbors=3))
+    ]),
+    "SVM": Pipeline([
+        ("tfidf", TfidfVectorizer()),
+        ("model", LinearSVC())
+    ])
+}
+ 
+for name, model in models.items():
+    model.fit(X_train, y_train)
+    prediction = model.predict(X_test)
+    print("\\n", name)
+    print("Accuracy:", accuracy_score(y_test, prediction))
+    print(classification_report(y_test, prediction))
+ 
+# Change "text" and "label" if your CSV uses different column names.
+8. Bank Customer Churn – Neural Network Classifier
+Predicts whether a customer will leave the bank. Uses an MLP neural network classifier.
+Dataset / note: Requires Churn_Modelling.csv with an Exited target column, as in the common bank churn dataset.
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.neural_network import MLPClassifier
+from sklearn.metrics import accuracy_score, classification_report
+ 
+data = pd.read_csv("Churn_Modelling.csv")
+ 
+# Exited is the target: 1 = customer leaves, 0 = stays
+y = data["Exited"]
+X = data.drop(columns=["Exited"])
+ 
+# Remove identifier/name columns if present
+X = X.drop(columns=["RowNumber", "CustomerId", "Surname"],
+           errors="ignore")
+ 
+numeric_cols = X.select_dtypes(include=["number"]).columns
+categorical_cols = X.select_dtypes(exclude=["number"]).columns
+ 
+numeric_pipe = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scale", StandardScaler())
+])
+ 
+categorical_pipe = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encode", OneHotEncoder(handle_unknown="ignore"))
+])
+ 
+preprocess = ColumnTransformer([
+    ("num", numeric_pipe, numeric_cols),
+    ("cat", categorical_pipe, categorical_cols)
+])
+ 
+model = Pipeline([
+    ("prep", preprocess),
+    ("nn", MLPClassifier(hidden_layer_sizes=(16, 8),
+                         max_iter=500, random_state=42))
+])
+ 
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+ 
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+ 
+print("Accuracy:", accuracy_score(y_test, pred))
+print(classification_report(y_test, pred))
+ 
+# If your target column has another name, replace "Exited".
+9. Diabetes Dataset – KNN and Evaluation Metrics
+Trains KNN and prints confusion matrix, accuracy, error rate, precision and recall.
+Dataset / note: Requires diabetes.csv with input columns and an Outcome column (0 or 1).
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import (confusion_matrix, accuracy_score,
+                             precision_score, recall_score)
+ 
+data = pd.read_csv("diabetes.csv")
+ 
+# Common Pima diabetes dataset target column
+X = data.drop("Outcome", axis=1)
+y = data["Outcome"]
+ 
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+ 
+scaler = StandardScaler()
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+ 
+knn = KNeighborsClassifier(n_neighbors=5)
+knn.fit(X_train, y_train)
+ 
+pred = knn.predict(X_test)
+ 
+cm = confusion_matrix(y_test, pred)
+accuracy = accuracy_score(y_test, pred)
+error_rate = 1 - accuracy
+precision = precision_score(y_test, pred, zero_division=0)
+recall = recall_score(y_test, pred, zero_division=0)
+ 
+print("Confusion Matrix:\\n", cm)
+print("Accuracy:", accuracy)
+print("Error Rate:", error_rate)
+print("Precision:", precision)
+print("Recall:", recall)
+10. Titanic Survival Prediction
+Predicts passenger survival using passenger details. This example expects the common train.csv dataset.
+Dataset / note: Requires Kaggle-style Titanic train.csv containing Survived, Pclass, Sex, Age, SibSp, Parch, Fare and Embarked.
+import pandas as pd
+from sklearn.model_selection import train_test_split
+from sklearn.compose import ColumnTransformer
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, classification_report
+ 
+data = pd.read_csv("train.csv")
+ 
+y = data["Survived"]
+# Use common passenger information columns
+X = data[["Pclass", "Sex", "Age", "SibSp",
+          "Parch", "Fare", "Embarked"]]
+ 
+numeric_cols = ["Pclass", "Age", "SibSp", "Parch", "Fare"]
+categorical_cols = ["Sex", "Embarked"]
+ 
+numeric_pipe = Pipeline([
+    ("imputer", SimpleImputer(strategy="median")),
+    ("scale", StandardScaler())
+])
+ 
+categorical_pipe = Pipeline([
+    ("imputer", SimpleImputer(strategy="most_frequent")),
+    ("encode", OneHotEncoder(handle_unknown="ignore"))
+])
+ 
+preprocess = ColumnTransformer([
+    ("num", numeric_pipe, numeric_cols),
+    ("cat", categorical_pipe, categorical_cols)
+])
+ 
+model = Pipeline([
+    ("prep", preprocess),
+    ("classifier", RandomForestClassifier(n_estimators=100,
+                                          random_state=42))
+])
+ 
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+ 
+model.fit(X_train, y_train)
+pred = model.predict(X_test)
+ 
+print("Accuracy:", accuracy_score(y_test, pred))
+print(classification_report(y_test, pred))
+Group C – Blockchain (Solidity, not Python)
+The assignment asks for two Solidity smart contracts: (C1) Student data using structures, arrays and a fallback function; and (C2) a bank account contract with deposit, withdraw and balance operations. These must be written in Solidity and deployed to an Ethereum test network using a tool such as Remix. Python is not a substitute for a Solidity contract.
+Practical reminder: Confirm the exact CSV filenames and column names with your lab datasets. The ML programs above use common dataset formats; column names may need small changes if your college has supplied a differently named dataset.
+Quick viva revision
+•	Greedy method: makes the best available local choice at each step.
+•	Dynamic programming: stores results of smaller subproblems to avoid repeated work.
+•	Backtracking: tries a choice; if it fails, it goes back and tries another choice.
+•	KNN: classifies a sample using the labels of its nearest K training samples.
+•	SVM: finds a decision boundary (hyperplane) that separates classes.
+•	Neural network: learns patterns through connected layers of artificial neurons.
+•	Confusion matrix: table showing correct and incorrect classification results.
+•	Thread: a smaller execution path within a process; Python threads may not speed up CPU-heavy code.

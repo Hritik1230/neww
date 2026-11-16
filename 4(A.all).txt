@@ -1,27 +1,30 @@
 A1)
-# Non recursive
+# Non-Recursive Fibonacci
+def fib_nonrec(n):
+    a = 0
+    b = 1
 
-# n = int(input("Enter number of terms: "))
-
-# a = 0
-# b = 1
-
-# for i in range(n):
-#     print(a, end=" ")
-#     c = a + b
-#     a = b
-#     b = c
+    for i in range(n):
+        print(a, end=" ")
+        c = a + b
+        a = b
+        b = c
 
 
-# Using Recursion
+# Recursive Fibonacci
 def fibonacii(n):
-    if n <=1:
+    if n <= 1:
         return n
 
     return fibonacii(n-1) + fibonacii(n-2)
 
-n = int(input("Enter the number of terms:"))
 
+n = int(input("Enter number of terms: "))
+
+print("Non-Recursive Fibonacci:")
+fib_nonrec(n)
+
+print("\nRecursive Fibonacci:")
 for i in range(n):
     print(fibonacii(i), end=" ")
 

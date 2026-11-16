@@ -1,0 +1,415 @@
+A1)
+# Non recursive
+
+# n = int(input("Enter number of terms: "))
+
+# a = 0
+# b = 1
+
+# for i in range(n):
+#     print(a, end=" ")
+#     c = a + b
+#     a = b
+#     b = c
+
+
+# Using Recursion
+def fibonacii(n):
+    if n <=1:
+        return n
+
+    return fibonacii(n-1) + fibonacii(n-2)
+
+n = int(input("Enter the number of terms:"))
+
+for i in range(n):
+    print(fibonacii(i), end=" ")
+
+
+
+A2)
+
+text = input("Enter text: ")
+
+freq = {}
+
+for ch in text:
+    freq[ch] = freq.get(ch, 0) + 1
+
+nodes = [[f, ch] for ch, f in freq.items()]
+
+while len(nodes) > 1:
+    nodes.sort(key=lambda x: x[0])
+
+    a = nodes.pop(0)
+    b = nodes.pop(0)
+
+    nodes.append([a[0] + b[0], [a[1], b[1]]])
+
+codes = {}
+
+def generate(node, code):
+    if isinstance(node, str):
+        codes[node] = code
+    else:
+        generate(node[0], code + "0")
+        generate(node[1], code + "1")
+
+if nodes:
+    generate(nodes[0][1], "0" if len(freq) == 1 else "")
+
+print("Huffman Codes:")
+
+for ch in codes:
+    print(ch, ":", codes[ch])
+
+
+
+
+A3)
+n = int(input("Enter number of items: "))
+
+items = []
+
+for i in range(n):
+    w = int(input("Enter weight: "))
+    v = int(input("Enter value: "))
+    items.append((w, v, v/w))
+
+capacity = int(input("Enter bag capacity: "))
+
+items.sort(key=lambda x: x[2], reverse=True)
+
+profit = 0
+
+for w, v, r in items:
+    if capacity >= w:
+        profit += v
+        capacity -= w
+    else:
+        profit += r * capacity
+        break
+
+print("Maximum profit:", profit)
+
+
+A4)
+n = int(input("Enter the number of items: "))
+
+weight = []
+profit = []
+
+for i in range(n):
+    weight.append(int(input("Enter the weight: ")))
+    profit.append(int(input("Enter the profit: ")))
+
+capacity = int(input("Enter the Capacity: "))
+
+dp = [[0 for j in range(capacity+1)]for i in range(n+1)]
+
+for i in range(1,n+1):
+    for j in range(capacity+1):
+        if weight[i-1] <=j:
+            dp[i][j] = max(
+                profit[i-1] + dp[i-1][j-weight[i-1]],
+                dp[i-1][j]
+            )
+
+        else:
+           dp[i][j]= dp[i][j-1]
+
+
+print("Maximum Profit: ",dp[n][capacity])
+
+
+
+
+A5)
+
+n = int(input("Enter the number of N: "))
+
+board = [[0]*n for i in range(n)]
+
+# Place first queen
+board[0][0] = 1
+
+def safe(row, col):
+
+    # Check column
+    for i in range(row):
+        if board[i][col] == 1:
+            return False
+
+    # Check left diagonal
+    i = row - 1
+    j = col - 1
+
+    while i >= 0 and j >= 0:
+        if board[i][j] == 1:
+            return False
+        i -= 1
+        j -= 1
+
+    # Check right diagonal
+    i = row - 1
+    j = col + 1
+
+    while i >= 0 and j < n:
+        if board[i][j] == 1:
+            return False
+        i -= 1
+        j += 1
+
+    return True
+
+
+def solve(row):
+
+    if row == n:
+        return True
+
+    for col in range(n):
+
+        if safe(row, col):
+            board[row][col] = 1
+
+            if solve(row+1):
+                return True
+
+            board[row][col] = 0
+
+    return False
+
+
+if solve(1):
+    for row in board:
+        print(row)
+else:
+    print("No solution")
+
+
+
+
+
+
+B2)
+
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+
+# Load dataset
+df = pd.read_csv("emails.csv")
+
+# Separate input and output
+X = df.drop(['Prediction', 'Email No.'], axis=1)
+y = df['Prediction']
+
+# Scaling
+sc = StandardScaler()
+X = sc.fit_transform(X)
+
+# Split dataset
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42
+)
+
+# SVM
+model = SVC(kernel='rbf')
+model.fit(X_train, y_train)
+
+y_pred = model.predict(X_test)
+
+print("SVM Accuracy Score:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, cmap="crest")
+plt.show()
+
+# KNN
+clf = KNeighborsClassifier(n_neighbors=1)
+clf.fit(X_train, y_train)
+
+y_pred = clf.predict(X_test)
+
+print("KNN Accuracy Score:", accuracy_score(y_test, y_pred))
+print(classification_report(y_test, y_pred))
+
+cm = confusion_matrix(y_test, y_pred)
+sns.heatmap(cm, annot=True, cmap="crest")
+plt.show()
+
+
+B3)
+
+# 1. Import libraries
+
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import confusion_matrix
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+
+# 2. Load dataset
+
+df = pd.read_csv("Churn_Modelling.csv")
+
+# 3. Separate input and output
+
+X = df.drop(['RowNumber', 'CustomerId', 'Surname', 'Exited'], axis=1)
+y = df['Exited']
+
+# 4. Convert text into numbers
+
+X = pd.get_dummies(X, columns=['Geography', 'Gender'], dtype=int)
+
+# 5. Split data
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=0
+)
+
+# 6. Scale data
+
+sc = StandardScaler()
+
+X_train = sc.fit_transform(X_train)
+X_test = sc.transform(X_test)
+
+# 7. Build ANN model
+
+model = Sequential()
+
+model.add(Dense(6, activation='relu', input_shape=(X_train.shape[1],)))
+model.add(Dense(6, activation='relu'))
+model.add(Dense(1, activation='sigmoid'))
+
+# 8. Compile model
+
+model.compile(
+    optimizer='adam',
+    loss='binary_crossentropy',
+    metrics=['accuracy']
+)
+
+# 9. Train model
+
+model.fit(X_train, y_train, epochs=100, batch_size=32)
+
+# 10. Predict
+
+y_pred = model.predict(X_test)
+y_pred = (y_pred > 0.5).astype(int)
+
+# 11. Confusion matrix
+
+cm = confusion_matrix(y_test, y_pred)
+
+print(cm)
+
+# 12. Accuracy
+
+accuracy = (cm[0][0] + cm[1][1]) / len(y_test) * 100
+
+print("Accuracy:", accuracy)
+
+
+
+B4)
+
+# 1. Import libraries
+
+import numpy as np
+import pandas as pd
+
+from sklearn.model_selection import train_test_split
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.metrics import confusion_matrix, accuracy_score, precision_score, recall_score, f1_score
+
+
+# 2. Load dataset
+
+data = pd.read_csv('./diabetes.csv')
+
+# 3. Display dataset
+
+print(data.head())
+
+
+# 4. Check missing values
+
+data.isnull().sum()
+
+
+# 5. Replace zeros with mean
+
+cols_to_replace = ['Glucose', 'BloodPressure', 'SkinThickness', 'Insulin', 'BMI']
+
+for column in cols_to_replace:
+    data[column].replace(0, np.nan, inplace=True)
+    data[column].fillna(round(data[column].mean(skipna=True)), inplace=True)
+
+
+# 6. Separate features and target
+
+X = data.iloc[:, :-1]
+y = data.iloc[:, -1]
+
+
+# 7. Split dataset
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=0
+)
+
+
+# 8. Initialize KNN
+
+knn = KNeighborsClassifier(n_neighbors=5)
+
+knn.fit(X_train, y_train)
+
+
+# 9. Predictions
+
+knn_pred = knn.predict(X_test)
+
+
+# 10. Calculate metrics
+
+cm = confusion_matrix(y_test, knn_pred)
+
+accuracy = accuracy_score(y_test, knn_pred)
+
+error_rate = 1 - accuracy
+
+precision = precision_score(y_test, knn_pred)
+
+recall = recall_score(y_test, knn_pred)
+
+f1 = f1_score(y_test, knn_pred)
+
+
+# 11. Print results
+
+print("Confusion Matrix:\n", cm)
+print("Accuracy Score:", accuracy)
+print("Error Rate:", error_rate)
+print("Precision Score:", precision)
+print("Recall Score:", recall)
+print("F1 Score:", f1)
+
+
+
+
